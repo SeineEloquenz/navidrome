@@ -10,6 +10,7 @@ import { humanize, pluralize } from 'inflection'
 import albumLists from '../album/albumLists'
 import PlaylistsSubMenu from './PlaylistsSubMenu'
 import LibrarySelector from '../common/LibrarySelector'
+import DiscoverMenuItem from '../discover/DiscoverMenuItem'
 import config from '../config'
 
 const useStyles = makeStyles((theme) => ({
@@ -113,6 +114,11 @@ const Menu = ({ dense = false }) => {
       })}
     >
       {open && <LibrarySelector />}
+      <DiscoverMenuItem
+        sidebarIsOpen={open}
+        dense={dense}
+        activeClassName={classes.active}
+      />
       <SubMenu
         handleToggle={() => handleToggle('menuAlbumList')}
         isOpen={state.menuAlbumList}

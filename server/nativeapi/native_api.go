@@ -90,6 +90,7 @@ func (api *Router) routes() http.Handler {
 		api.addMissingFilesRoute(r)
 		api.addKeepAliveRoute(r)
 		api.addInsightsRoute(r)
+		api.addDownloaderRoute(r)
 		api.addQuickConnectRoute(r)
 
 		r.With(adminOnlyMiddleware).Group(func(r chi.Router) {
