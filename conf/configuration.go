@@ -118,6 +118,7 @@ type configOptions struct {
 	Deezer                          deezerOptions       `json:",omitzero"`
 	ListenBrainz                    listenBrainzOptions `json:",omitzero"`
 	Jellyfin                        jellyfinOptions     `json:",omitzero"`
+	DL                              dlOptions           `json:",omitzero"`
 	EnableScrobbleHistory           bool
 	Tags                            map[string]TagConf `json:",omitempty"`
 	Agents                          string
@@ -182,6 +183,18 @@ type subsonicOptions struct {
 	EnableAverageRating   bool
 	LegacyClients         string
 	MinimalClients        string
+}
+
+// dlOptions configures the navidrome-dl integration. SomedlURL points at the
+// running `somedl web` instance; when empty, the /api/dl routes are not mounted.
+// MaxRetries of 0 stops failed downloads from being re-enqueued.
+type dlOptions struct {
+	SomedlURL         string
+	MaxRetries        int
+	RetryInitialDelay time.Duration
+	RetryMaxDelay     time.Duration
+	RetryPollInterval time.Duration
+	RetryHistoryTTL   time.Duration
 }
 
 type TagConf struct {
@@ -828,6 +841,12 @@ func setViperDefaults() {
 	viper.SetDefault("jukebox.devices", []AudioDeviceDefinition{})
 	viper.SetDefault("jukebox.default", "")
 	viper.SetDefault("jukebox.adminonly", true)
+	viper.SetDefault("dl.somedlurl", "")
+	viper.SetDefault("dl.maxretries", 4)
+	viper.SetDefault("dl.retryinitialdelay", 2*time.Minute)
+	viper.SetDefault("dl.retrymaxdelay", 30*time.Minute)
+	viper.SetDefault("dl.retrypollinterval", 15*time.Second)
+	viper.SetDefault("dl.retryhistoryttl", 24*time.Hour)
 	viper.SetDefault("scanner.enabled", true)
 	viper.SetDefault("scanner.schedule", "0")
 	viper.SetDefault("scanner.extractor", consts.DefaultScannerExtractor)
