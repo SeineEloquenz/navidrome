@@ -118,6 +118,7 @@ type configOptions struct {
 	Deezer                          deezerOptions       `json:",omitzero"`
 	ListenBrainz                    listenBrainzOptions `json:",omitzero"`
 	Jellyfin                        jellyfinOptions     `json:",omitzero"`
+	DL                              dlOptions           `json:",omitzero"`
 	EnableScrobbleHistory           bool
 	Tags                            map[string]TagConf `json:",omitempty"`
 	Agents                          string
@@ -182,6 +183,12 @@ type subsonicOptions struct {
 	EnableAverageRating   bool
 	LegacyClients         string
 	MinimalClients        string
+}
+
+// dlOptions configures the navidrome-dl integration. SomedlURL points at the
+// running `somedl web` instance; when empty, the /api/dl routes are not mounted.
+type dlOptions struct {
+	SomedlURL string
 }
 
 type TagConf struct {
@@ -828,6 +835,7 @@ func setViperDefaults() {
 	viper.SetDefault("jukebox.devices", []AudioDeviceDefinition{})
 	viper.SetDefault("jukebox.default", "")
 	viper.SetDefault("jukebox.adminonly", true)
+	viper.SetDefault("dl.somedlurl", "")
 	viper.SetDefault("scanner.enabled", true)
 	viper.SetDefault("scanner.schedule", "0")
 	viper.SetDefault("scanner.extractor", consts.DefaultScannerExtractor)

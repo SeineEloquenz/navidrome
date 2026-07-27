@@ -1,0 +1,96 @@
+name: Sync upstream
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  UPSTREAM: https://github.com/navidrome/navidrome.git
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # Requires a PAT (secret SYNC_TOKEN) with `workflow` scope. The default
+          # GITHUB_TOKEN is a GitHub App token, which GitHub forbids from pushing
+          # refs that touch .github/workflows/* — and upstream tags and the dl
+          # merge both do, so tag/dl pushes fail without it.
+          token: ${{ secrets.SYNC_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Set up git and fetch upstream
+        run: |
+          git config user.name 'navidrome-dl-bot'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git remote add upstream "$UPSTREAM"
+          git fetch --prune origin
+          git fetch upstream master --tags
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Mirror master and tags
+        run: |
+          set -euo pipefail
+          git checkout -B master origin/master
+          # Fails loudly if master ever carries local commits (it shouldn't).
+          git merge --ff-only upstream/master
+          git push origin master
+          git push origin --tags
+
+      - name: Merge latest release into dl
+        env:
+          GH_TOKEN: ${{ secrets.SYNC_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          latest="$(git tag -l 'v*' | sort -V | tail -n1)"
+          if [ -z "$latest" ]; then echo "No upstream tags"; exit 0; fi
+          echo "Latest release: $latest"
+
+          git checkout -B dl origin/dl
+          if git merge-base --is-ancestor "$latest" dl; then
+            echo "dl already contains $latest"; exit 0
+          fi
+
+          if git merge --no-edit "$latest"; then
+            # A new release usually changes go.mod / package-lock, so refresh the
+            # nix hashes and fold them into the merge before pushing.
+            bash nix/update-hashes.sh
+            if ! git diff --quiet -- nix/navidrome.nix; then
+              git add nix/navidrome.nix
+              git commit -m "chore(nix): update hashes for $latest"
+            fi
+            git push origin dl
+            exit 0
+          fi
+
+          # Conflict: leave dl untouched, surface it as a PR to resolve.
+          git merge --abort
+          branch="sync/$latest"
+          git switch -c "$branch"
+          git merge --no-edit "$latest" || true
+          conflicts="$(git diff --name-only --diff-filter=U || true)"
+          git add -A
+          git commit -m "Merge upstream $latest into dl (conflicts to resolve)"
+          git push -f origin "$branch"
+          {
+            echo "Automated merge of \`$latest\` into \`dl\` hit conflicts."
+            echo
+            echo "Conflicted files:"
+            echo '```'
+            echo "$conflicts"
+            echo '```'
+            echo
+            echo "Resolve the conflict markers on \`$branch\`, then run"
+            echo "\`bash nix/update-hashes.sh\` (go.mod likely changed) and merge this PR."
+          } > pr-body.md
+          gh pr create --base dl --head "$branch" \
+            --title "Merge upstream $latest into dl (conflicts)" \
+            --body-file pr-body.md 2>/dev/null || echo "PR already exists"
