@@ -29,8 +29,12 @@ import {
 } from '../actions'
 import { formatBytes } from '../utils'
 import config from '../config'
+<<<<<<< HEAD
 import { ToggleFieldsMenu } from '../common'
 import CompleteAlbumDialog from '../discover/CompleteAlbumDialog'
+=======
+import { RefreshMetadataButton, ToggleFieldsMenu } from '../common'
+>>>>>>> v0.64.0
 
 const useStyles = makeStyles({
   toolbar: { display: 'flex', justifyContent: 'space-between', width: '100%' },
@@ -151,6 +155,7 @@ const AlbumActions = ({
               <CloudDownloadOutlinedIcon />
             </AlbumButton>
           )}
+<<<<<<< HEAD
           <AlbumButton
             onClick={handleComplete}
             label={translate('resources.album.actions.completeAlbum', {
@@ -159,6 +164,13 @@ const AlbumActions = ({
           >
             <LibraryAddIcon />
           </AlbumButton>
+=======
+          <RefreshMetadataButton
+            resource="album"
+            record={record}
+            size="small"
+          />
+>>>>>>> v0.64.0
         </div>
         <div>{isNotSmall && <ToggleFieldsMenu resource="albumSong" />}</div>
       </div>
