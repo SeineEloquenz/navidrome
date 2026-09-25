@@ -10,7 +10,7 @@
 
   inherit src;
 
-  vendorHash = "sha256-vndJx4BcXQCJewKCv3TvSrxG6sCykfBvkOQK/kVQIPk=";
+  vendorHash = "sha256-/3NhF/OHDxWrciN5GdROiO1yhjjdm5F5ntW7h6tzFGc=";
 
   npmDeps = fetchNpmDeps {
     name = "navidrome-dl-npm-deps";
